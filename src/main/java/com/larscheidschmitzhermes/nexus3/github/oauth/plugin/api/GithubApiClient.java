@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -55,7 +56,23 @@ public class GithubApiClient {
     }
 
     public void init() {
-        client = HttpClientBuilder.create().build();
+        String proxyHost = System.getProperty("https.proxyHost", "");
+        if (proxyHost.isEmpty()) {
+            proxyHost = System.getProperty("http.proxyHost", "");
+        }
+
+        String proxyPort = System.getProperty("https.proxyPort", "");
+        if (proxyPort.isEmpty()) {
+            proxyPort = System.getProperty("http.proxyPort", "");
+        }
+
+        HttpClientBuilder builder = HttpClientBuilder.create();
+
+        if (!proxyHost.isEmpty() && !proxyPort.isEmpty()) {
+            builder.setProxy(new HttpHost(proxyHost, Integer.parseInt(proxyPort)));
+        }
+
+        client = builder.build();
         mapper = new ObjectMapper();
         initPrincipalCache();
     }
