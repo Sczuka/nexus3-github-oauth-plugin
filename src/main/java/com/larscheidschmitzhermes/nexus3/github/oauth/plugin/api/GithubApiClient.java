@@ -56,20 +56,22 @@ public class GithubApiClient {
     }
 
     public void init() {
-        String proxyHost = System.getProperty("https.proxyHost", "");
-        if (proxyHost.isEmpty()) {
-            proxyHost = System.getProperty("http.proxyHost", "");
-        }
-
-        String proxyPort = System.getProperty("https.proxyPort", "");
-        if (proxyPort.isEmpty()) {
-            proxyPort = System.getProperty("http.proxyPort", "");
-        }
-
         HttpClientBuilder builder = HttpClientBuilder.create();
 
-        if (!proxyHost.isEmpty() && !proxyPort.isEmpty()) {
-            builder.setProxy(new HttpHost(proxyHost, Integer.parseInt(proxyPort)));
+        if (configuration != null) {
+            String proxyHost = configuration.getGithubProxyHost();
+            if (proxyHost.isEmpty()) {
+                proxyHost = System.getProperty("http.proxyHost", "");
+            }
+
+            String proxyPort = configuration.getGithubProxyPort();
+            if (proxyPort.isEmpty()) {
+                proxyPort = System.getProperty("http.proxyPort", "");
+            }
+
+            if (!proxyHost.isEmpty() && !proxyPort.isEmpty()) {
+                builder.setProxy(new HttpHost(proxyHost, Integer.parseInt(proxyPort)));
+            }
         }
 
         client = builder.build();
