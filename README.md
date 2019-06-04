@@ -67,6 +67,8 @@ Within the file you can configure the following properties:
 |`github.org`|The Organization the user should be a member of. If this is not set anyone with a Github account is allowed tot login.|----|
 |`github.proxy.host`|Hostname for the proxy|----|
 |`github.proxy.port`|Port for the proxy|----|
+|`github.teams.flatten`|Flattens sub-teams into the root team.|`false`|
+
 
 This is what an example file would look like:
 ```properties

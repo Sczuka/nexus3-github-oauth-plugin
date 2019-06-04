@@ -35,6 +35,9 @@ public class GithubOauthConfiguration {
 
     private static final String GITHUB_PROXY_PORT = "github.proxy.port";
 
+    private static final String GITHUB_FLATTEN_TEAMS = "github.teams.flatten";
+
+
     private static final String GITHUB_PRINCIPAL_CACHE_TTL_KEY = "github.principal.cache.ttl";
 
     private static final String GITHUB_ORG = "github.org";
@@ -72,6 +75,8 @@ public class GithubOauthConfiguration {
     public String getGithubProxyHost() { return configuration.getProperty(GITHUB_PROXY_HOST, ""); }
 
     public String getGithubProxyPort() { return configuration.getProperty(GITHUB_PROXY_PORT, ""); }
+
+    public String getGithubFlattenTeams() { return configuration.getProperty(GITHUB_FLATTEN_TEAMS, ""); }
 
     public Duration getPrincipalCacheTtl() {
         return Duration.parse(configuration.getProperty(GITHUB_PRINCIPAL_CACHE_TTL_KEY, DEFAULT_PRINCIPAL_CACHE_TTL.toString()));

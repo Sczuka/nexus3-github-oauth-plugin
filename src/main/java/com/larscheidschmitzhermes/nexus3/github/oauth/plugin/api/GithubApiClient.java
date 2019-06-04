@@ -1,15 +1,12 @@
 package com.larscheidschmitzhermes.nexus3.github.oauth.plugin.api;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.GithubAuthenticationException;
+import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.GithubPrincipal;
+import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.configuration.GithubOauthConfiguration;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -19,13 +16,14 @@ import org.apache.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.GithubAuthenticationException;
-import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.GithubPrincipal;
-import com.larscheidschmitzhermes.nexus3.github.oauth.plugin.configuration.GithubOauthConfiguration;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 @Named("GithubApiClient")
@@ -112,7 +110,7 @@ public class GithubApiClient {
 
 
     private GithubUser retrieveGithubUser(String loginName, char[] token) throws GithubAuthenticationException {
-        GithubUser githubUser = getAndSerializeObject(configuration.getGithubUserUri(), token,GithubUser.class);
+        GithubUser githubUser = getAndSerializeObject(configuration.getGithubUserUri(), token, GithubUser.class);
 
         if (!loginName.equals(githubUser.getLogin())) {
             throw new GithubAuthenticationException("Given username does not match Github Username!");
@@ -137,7 +135,17 @@ public class GithubApiClient {
     }
 
     private String mapGithubTeamToNexusRole(GithubTeam team) {
-        return team.getOrganization().getLogin() + "/" + team.getName();
+        String teamName = team.getName();
+
+        if (Boolean.parseBoolean(configuration.getGithubFlattenTeams())) {
+            int delimiter = teamName.indexOf('/');
+
+            if (delimiter > 0) {
+                teamName = teamName.substring(0, delimiter);
+            }
+        }
+
+        return team.getOrganization().getLogin() + "/" + teamName;
     }
 
     private BasicHeader constructGithubAuthorizationHeader(char[] token) {
