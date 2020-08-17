@@ -18,7 +18,7 @@ When logged in through Github, all organizations and teams the user is a member 
 
 _organization name/team name_ e.g. `dummy-org/developers`
 
-You need to manually create these roles in _Administration > Security > Roles > (+) Create Role > Nexus Role_ in order to assign them the desired priviliges. The _Role ID_ should map to the _organization name/team name_. Note that by default anybody is allowed to login (authenticate) with a valid Github Token from your Github instance, but he/she won't have any priviledges assigned with their teams (authorization) - see the config property `github.org` if you want to change that behaviour.
+You need to manually create these roles in _Administration > Security > Roles > (+) Create Role > Nexus Role_ in order to assign them the desired privileges. The _Role ID_ should map to the _organization name/team name_. Note that by default anybody is allowed to login (authenticate) with a valid Github Token from your Github instance, but he/she won't have any privileges assigned with their teams (authorization) - see the config property `github.org` if you want to change that behaviour.
 
 ![role-mapping](role-mapping.png)
 
@@ -34,6 +34,18 @@ In your github account under _Settings > Personal access tokens_ generate a new 
 When logging in to nexus, use your github user name as the username and the oauth token you just generated as the password.
 This also works through maven, gradle etc.
 
+Example Maven settings.xml fragment:
+
+```xml
+<servers>
+  <server>
+    <id>Id that matches the id element of the repository/mirror that Maven tries to connect to</id>
+    <username>Your Github user name</username>
+    <password>Your Github token</password>
+  </server>
+</servers>
+```
+
 ## Installation
 
 #### 0. Prerequisites
@@ -43,16 +55,10 @@ For the following commands we assume your nexus installation resides in `/opt/so
 
 #### 1. Download and install
 
-The following lines will:
-- create a directory in the `nexus` / `kafka` maven repository
-- download the latest release from github
-- unzip the releae to the maven repository
-- add the plugin to the `karaf` `startup.properties`.
+Download the latest release from github and place it in the `nexus/deploy` folder, e.g., like so:
+
 ```shell
-mkdir -p /opt/sonatype/nexus/system/com/larscheidschmitzhermes/ &&\
-wget -O /opt/sonatype/nexus/system/com/larscheidschmitzhermes/nexus3-github-oauth-plugin.zip https://github.com/larscheid-schmitzhermes/nexus3-github-oauth-plugin/releases/download/2.0.2/nexus3-github-oauth-plugin.zip &&\
-unzip /opt/sonatype/nexus/system/com/larscheidschmitzhermes/nexus3-github-oauth-plugin.zip -d /opt/sonatype/nexus/system/com/larscheidschmitzhermes/ &&\
-echo "mvn\:com.larscheidschmitzhermes/nexus3-github-oauth-plugin/2.0.2 = 200" >> /opt/sonatype/nexus/etc/karaf/startup.properties
+wget -O /opt/sonatype/nexus/deploy/nexus3-github-oauth-plugin.kar https://github.com/larscheid-schmitzhermes/nexus3-github-oauth-plugin/releases/download/3.0.0/nexus3-github-oauth-plugin.kar
 ```
 
 #### 2. Create configuration
@@ -64,7 +70,10 @@ Within the file you can configure the following properties:
 |---             |---                                      |---    |
 |`github.api.url`|URL of the Github API to operate against.|`https://api.github.com`|
 |`github.principal.cache.ttl`|[Java Duration](https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-) for how long a given Access will be cached for. This is a tradeoff of how quickly access can be revoked and how quickly a Github user's rate limit will be reached for the Github User API. _Note:_ Github Enterprise does not have a rate limit!|`PT1M` (1 Minute)|
-|`github.org`|The Organization the user should be a member of. If this is not set anyone with a Github account is allowed tot login.|----|
+|`github.org`|The comma-separated list of Organizations the user should be a member of. If this is not set, anyone with a Github account is allowed to log in.|----|
+|`request.timeout.connection-request`|The timeout in milliseconds used when requesting a connection from the connection manager. A timeout value of zero is interpreted as an infinite timeout. A negative value is interpreted as undefined (system default).|`-1`|
+|`request.timeout.connect`|The timeout in milliseconds until a connection is established. A timeout value of zero is interpreted as an infinite timeout. A negative value is interpreted as undefined (system default).|`-1`|
+|`request.timeout.socket`|The socket timeout (`SO_TIMEOUT`) in milliseconds, which is the timeout for waiting for data  or, put differently, a maximum period inactivity between two consecutive data packets). A timeout value of zero is interpreted as an infinite timeout. A negative value is interpreted as undefined (system default).|`-1`|
 
 This is what an example file would look like:
 ```properties

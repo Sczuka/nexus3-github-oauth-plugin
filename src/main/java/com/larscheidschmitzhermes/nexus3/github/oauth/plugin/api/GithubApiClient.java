@@ -2,6 +2,7 @@ package com.larscheidschmitzhermes.nexus3.github.oauth.plugin.api;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import javax.inject.Singleton;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
@@ -55,7 +57,15 @@ public class GithubApiClient {
     }
 
     public void init() {
-        client = HttpClientBuilder.create().build();
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(configuration.getRequestConnectTimeout())
+                .setConnectionRequestTimeout(configuration.getRequestConnectionRequestTimeout())
+                .setSocketTimeout(configuration.getRequestSocketTimeout())
+                .build();
+        client = HttpClientBuilder
+                .create()
+                .setDefaultRequestConfig(config)
+                .build();
         mapper = new ObjectMapper();
         initPrincipalCache();
     }
@@ -106,9 +116,11 @@ public class GithubApiClient {
     }
 
     private void checkUserInOrg(String githubOrg, char[] token) throws GithubAuthenticationException {
-        Set<GithubOrg> orgs = getAndSerializeCollection(configuration.getGithubUserOrgsUri(), token, GithubOrg.class);
-        if (orgs.stream().noneMatch(org -> githubOrg.equals(org.getLogin()))) {
-            throw new GithubAuthenticationException("Given username not in Organization '" + githubOrg + "'!");
+        Set<GithubOrg> orgsInToken = getAndSerializeCollection(configuration.getGithubUserOrgsUri(), token, GithubOrg.class);
+        String[] allowedOrgs = githubOrg.split(",");
+
+        if (orgsInToken.stream().noneMatch(org -> Arrays.asList(allowedOrgs).contains(org.getLogin()))) {
+            throw new GithubAuthenticationException("Given username is not in the Github Organization '" + githubOrg + "' or the Organization is not in the allowed list!");
         }
     }
 
